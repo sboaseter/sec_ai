@@ -1,10 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from sqlalchemy import Column, Integer, String, Text, DateTime
-
+import requests
+from bs4 import BeautifulSoup as bs
 class TestSEC:
-	def __init__(self):
-		print('ok?')
+	def __init__(self, sec_url):
+		self.sec_url = sec_url
+ 
+	def scrape(self):
+		res = requests.get(self.sec_url)
+		if res.status_code == 200: #great!
+			soup = bs(res.content, 'html.parser')
+			all_links = soup.findAll(lambda tag: tag.name=='a' and tag.text == '[html]')
+			if len(all_links) > 0:
+				return all_links
+			else:
+				return ['No links found']
+		else:
+			return ['Error code: ' + str(res.status_code)]
 
 #from rain.models.shared import Base
 
