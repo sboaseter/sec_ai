@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, UnicodeText
 from secai.models.shared import Base
 
 class Company(Base):
@@ -21,6 +21,7 @@ class Submission(Base):
 	rtype = Column('type', String(45))
 	acceptedOn = Column('acceptedOn', DateTime)
 	content = Column('content', Text)
+	contentUrl = Column('contentUrl', String(1024))
 	matches = Column('matches', Integer)
 	sentiment = Column('sentiment', String(1024))
 
