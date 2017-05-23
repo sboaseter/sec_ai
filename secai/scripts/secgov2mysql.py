@@ -2,6 +2,7 @@ import sys
 sys.path.insert(0, '../..')
 from secai.models.shared import db
 from secai.models.dbmodels import Company, Submission
+from secai.scripts.cncslookup import getSymbolByName
 from datetime import datetime
 import requests
     
@@ -18,8 +19,8 @@ matches, misses = 0, 0
 u_comps = []
 counter = 0
 for x in eightk:    
-    if counter % 100 == 0:
-        print(str(x))
+#    if counter % 100 == 0:
+        #print(str(x))
 
     counter = counter + 1
     #                               type    name       cik       filed     fileurl
@@ -30,33 +31,28 @@ for x in eightk:
     locate = Company.query.filter(
         Company.name.ilike(cf[1].strip().lower())).first()
     c_id = 1
-    if locate:
-        print(cf[1])
+    if locate: #found in list
         matches = matches + 1
         c_id = locate.id
     else:
+        print('Lookup: ' + getSymbolByName(cf[1]))
         u_comps.append(cf[1])
         misses = misses + 1
-
-#    res = requests.get('https://www.sec.gov/Archives/' + cf[4])
-#    if res.status_code != 200: #great!
-#        print('Failed to get report')
-#        continue
-    
-
     ns = Submission()
     ns.companyId = c_id
     ns.accessionNo = '-' + str(counter)
     ns.rtype = cf[0]
     ns.acceptedOn = datetime.now()
 #    ns.content = res.content
+    ns.content = ''
     ns.contentUrl = cf[4]
     ns.matches = 0
     ns.sentiment = 'None'
     db.add(ns)
 
-    #if counter % 100 == 0:
-    db.flush()
+    if counter % 100 == 0:
+        print(str(counter))
+        db.flush()
 
 db.flush()
 

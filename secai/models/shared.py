@@ -10,4 +10,4 @@ Base = declarative_base()
 Base.query = db.query_property()
 
 def init_db():
-	from secai.models.dbmodels import Company
+	from secai.models.dbmodels import Company, Submission
