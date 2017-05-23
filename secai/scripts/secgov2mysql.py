@@ -38,10 +38,10 @@ for x in eightk:
         u_comps.append(cf[1])
         misses = misses + 1
 
-    res = requests.get('https://www.sec.gov/Archives/' + cf[4])
-    if res.status_code != 200: #great!
-        print('Failed to get report')
-        continue
+#    res = requests.get('https://www.sec.gov/Archives/' + cf[4])
+#    if res.status_code != 200: #great!
+#        print('Failed to get report')
+#        continue
     
 
     ns = Submission()
@@ -49,7 +49,7 @@ for x in eightk:
     ns.accessionNo = '-' + str(counter)
     ns.rtype = cf[0]
     ns.acceptedOn = datetime.now()
-    ns.content = res.content
+#    ns.content = res.content
     ns.contentUrl = cf[4]
     ns.matches = 0
     ns.sentiment = 'None'
