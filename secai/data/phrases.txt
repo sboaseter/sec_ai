@@ -1,0 +1,43 @@
+0.5|distribution expansion project
+.5|third party marketing
+0|brand expansion
+0|entered into an Agreement 
+0|entered into a Agreement 
+.5|accounts payable extinguished
+0|exchange shares of common stock
+1|decreasing the Company's authorized shares of common stock
+.5|Reverse Merger
+.5|generated million in revenue
+1.0|Share exchange agreement (seems to be a good one)
+.5|Entry Into a Material Event
+0|PR promotion promote 
+.5|Securities Purchase Agreement
+1|Awarded (government contract) Contract
+.5|Order in favor of the company
+.5|Fully exercised the/this convertible note
+1|Convertible notes paid in full
+1|reduce convertible debt
+1|eliminate convertible debt
+0|sold business division
+0|Asset Purchase Agreement
+.5|Reduction of debt obligations
+1|reducing outstanding shares
+.5|retire shares
+.5|Improve company balance sheet
+.5|Improve company's balance sheet
+1|Reduce convertible notes
+.5|100 percent converted
+.5|100% converted
+.5|Application to uplist
+.5|Uplist 
+.5|Uplisted
+.5|Spin-Off Agreement
+0|entered into a
+0|change the company's name
+0|name change
+.5|Supply agreement
+0|merger
+.5|new symbol
+.5|investor presentation
+.5|become fully-reporting
+.5|become fully reporting

@@ -23,6 +23,7 @@ def getSymbolByName(srch):
         return 'Not found'
 
     if len(data['items']) > 0:
+        print(data['items'][0])
         return data['items'][0]['symbol']
     else:
         return "Not found"
