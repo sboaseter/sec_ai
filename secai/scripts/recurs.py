@@ -22,7 +22,6 @@ def getNewListings():
     try:
         soup = bs(str(res.content).encode('utf-8'), 'html.parser')
         all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[html]')
-#        return all_links[1]['href']
         return [x['href'] for x in all_links]
 
     except Exception as e:
