@@ -15,7 +15,7 @@ filing_num = 10
 xt = SECMonitor('https://www.sec.gov/cgi-bin/browse-edgar?company=&CIK=&type='+filing_type+'&owner=include&count='+str(filing_num)+'&action=getcurrent')
 while True:
     #add threads after the scrape, inside SECMonitor
-    xres = xt.scrape()
+    xres = xt.getNewListings()
     time.sleep(60)
 
 

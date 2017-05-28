@@ -5,17 +5,84 @@ from bs4 import BeautifulSoup as bs
 from secai.scripts.cncslookup import getSymbolByName
 from secai.models.shared import db
 from secai.models.dbmodels import Company, Submission, Phrase
+from secai.scripts.utils import replace_trash
 from secai.scripts.iflychat import IFlyPoster 
 import re
 from datetime import datetime
 import codecs
+from colorama import init, Fore, Style
+init()
 
 
 class SECMonitor:
     def __init__(self, sec_url):
         self.sec_url = sec_url
+        self.debug_on = False
+        self.acno_proc = []
 
+    # Main listing refresh
+    def getNewListings(self):
+        res = requests.get(self.sec_url)
+        try:
+            soup = bs(str(res.content).encode('utf-8'), 'html.parser')
+            all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[html]')
+            print('Found {} Filings'.format(len(all_links)))
+            for f in all_links: # Link | Processed
+                linkref = f['href']
+                accessno = re.search(r'^.*\/([^.]*)-.*$', linkref).group(1).strip()
+                if accessno in self.acno_proc:
+                    continue
+                self.acno_proc.append(accessno)
+
+                existingsub = Submission.query.filter(Submission.accessionNo.ilike(accessno)).first()
+                if existingsub:
+                    print('Exists: ' + existingsub.accessionNo)
+                    continue
+
+                # Collect data from listing page and lookup symbol
+
+                fp1 = f.parent
+                prev_row = fp1.parent.previous_sibling.previous_sibling.text.strip()
+                company = re.sub('\((.*?)\)', '', prev_row)
+                company = re.sub(r'^(?:\\n)+','', company)
+                if company.endswith(r'\n'): company = company[:-2]
+
+                company = company.lstrip().rstrip()
+#                print('ncount: ' + str(company.count('\n')) + ': ' + company)
+                company_symbol = getSymbolByName(company)
+                # TODO
+                if company_symbol == 'Not found':
+                    continue
+                filing8k_txt_url = self.locate8kReport(f['href'])
+                print('[{}]: {}{}{}\t\t{}'.format(accessno, Fore.GREEN,company_symbol, Fore.RESET,company))
+                if filing8k_txt_url == None:
+                    continue
+                subm = self.addSubmission((accessno, company_symbol, company, filing8k_txt_url))
+
+#            return [x['href'] for x in all_links] # List of hrefs to the Filing detail page
+
+        except Exception as e:
+            
+            print('getNewListings: ' + str(e))
+
+    # Locate the 8-k text document on the filing detail page
+    def locate8kReport(self, url_detail):
+        res = requests.get('https://www.sec.gov' + url_detail)
+        try:
+            soup = bs(str(res.content).encode('utf-8'), 'html.parser')
+            # 8-K text file in a table, td-cell to the left of description column '8-K'
+            all_links = soup.findAll(lambda tag: tag.name == 'td' and tag.text == '8-K')
+            for l in all_links: # Should only be one
+                pvtd = l.previous_sibling.previous_sibling.findAll(lambda tag: tag.name == 'a')
+                return pvtd[0]['href']
+        except Exception as e:
+            pass
+            if self.debug_on: 
+                print('locate8kReport: ' + str(e))
+
+    #Process 8-K report text
     def processContent(self, filing_url):
+#        print('Processing: ' + filing_url)
         res = requests.get('https://www.sec.gov' + filing_url)
         try:
             filing_content = bs(res.content, 'html.parser')
@@ -27,13 +94,11 @@ class SECMonitor:
             if x in str(res.content):
                 matches.append(x)
         return matches
-                
 
-        #print(strip_tags(str(filing_content.encode('utf-8'))))
-        #filing_content_sent = TextBlob(str(strip_tags(str(filing_content))))
-        #print(filing_content_sent.sentiment)        
 
     def addSubmission(self, new_subm):
+#        print('Adding: ')
+#        print(new_subm)
         locate = Company.query.filter(Company.name.ilike(
             new_subm[2].strip().lower())).first()
         c_id = 1
@@ -55,12 +120,8 @@ class SECMonitor:
         ns.accessionNo = new_subm[0]
         ns.rtype = '8-K'
         ns.acceptedOn = datetime.now()
-    #    ns.content = res.content
+
         ns.content = str(self.processContent(new_subm[3]))
-#        print('Processing: ' + new_subm[1] + ': ' + new_subm[2])
-#        print(self.processContent(new_subm[3]))
-#        ns.content = ''
-        ### Spawn process
         ns.contentUrl = new_subm[3]
         ns.matches = 0
         ns.sentiment = 'None'
@@ -84,46 +145,4 @@ class SECMonitor:
         ifcp = IFlyPoster()
         ifcp.postMessage(company + ': ' + company_symbol + ': ' + dictmatches)
 #        print(company + ': ' + company_symbol + ': ' + dictmatches)
-
-    def scrape(self):
-        ret = []
-        res = requests.get(self.sec_url)
-        if res.status_code != 200:  # great!
-            return ['Error code: ' + str(res.status_code)]
-        try:
-            soup = bs(res.content, 'html.parser')
-        except:
-            return 'Error...'
-            
-        #all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[html]')
-        #[text]-link is too big, need to use the above [html] to do 1 more crawl for access to the pure 8-k report!
-        all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[text]')
-        for f in all_links:
-            fp1 = f.parent
-            prev_row = fp1.parent.previous_sibling.previous_sibling.text.strip()
-            #accessionNo, unique
-            company = re.sub('\((.*?)\)', '', prev_row).strip()
-
-   #         self.notifyIFlyName(company)
-            company_symbol = getSymbolByName(company)
-#            self.notifyIFlySymbol(company,company_symbol)
-
-            linkref = f['href']
-            #accessno = re.sub('\(/.*?-index.htm\)', linkref).strip()
-            accessno = re.search(r'^.*\/([^.]*)-.*$', linkref).group(1)
-            existingsub = Submission.query.filter(Submission.accessionNo.ilike(accessno.strip())).first()
-            if existingsub:
-                continue
-            subm = self.addSubmission(
-                (accessno, company_symbol, company, f['href']))
-            print('newsubmission:' + str(subm))
-#            self.notifyIFlyMatches(company, company_symbol, str(subm))
-            ret.append(subm)
-            #pr = '\n\t'.join((company, f['href']))
-        if len(ret) > 0:
-            return ret
-#		if len(all_links) > 0:
-#			return all_links
-        else:
-            return ['No links found']
 

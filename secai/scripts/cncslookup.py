@@ -19,11 +19,11 @@ def getSymbolByName(srch):
         data = json.loads(my_json)
     except json.decoder.JSONDecodeError:
        
-        print(my_json)
+#        print(my_json)
         return 'Not found'
 
     if len(data['items']) > 0:
-        print(data['items'][0])
+#        print(data['items'][0])
         return data['items'][0]['symbol']
     else:
         return "Not found"
