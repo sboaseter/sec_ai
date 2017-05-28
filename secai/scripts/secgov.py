@@ -12,7 +12,7 @@ from datetime import datetime
 import codecs
 from colorama import init, Fore, Style
 init()
-
+from textblob import TextBlob
 
 class SECMonitor:
     def __init__(self, sec_url):
@@ -58,7 +58,9 @@ class SECMonitor:
                 if filing8k_txt_url == None:
                     continue
                 subm = self.addSubmission((accessno, company_symbol, company, filing8k_txt_url))
+                print(subm.content)
 
+                self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment)
 #            return [x['href'] for x in all_links] # List of hrefs to the Filing detail page
 
         except Exception as e:
@@ -93,7 +95,7 @@ class SECMonitor:
         for x in hardcoded_dict:
             if x in str(res.content):
                 matches.append(x)
-        return matches
+        return (matches, str(res.content))
 
 
     def addSubmission(self, new_subm):
@@ -121,16 +123,24 @@ class SECMonitor:
         ns.rtype = '8-K'
         ns.acceptedOn = datetime.now()
 
-        ns.content = str(self.processContent(new_subm[3]))
+        procRes = self.processContent(new_subm[3])
+        ns.content = str(procRes[0])
         ns.contentUrl = new_subm[3]
         ns.matches = 0
-        ns.sentiment = 'None'
+        try:
+            sentx = TextBlob(procRes[1])
+            ns.sentiment = str(sentx.sentiment)
+#            print(ns.sentiment)
+        except Exception as e:
+#            print('Sent: ' + str(e))
+            ns.sentiment = 'None'
         try:
             db.add(ns)
         except:
             print('Allready entered')
 
-        return ns.content
+#        return ns.content
+        return ns
 
     def notifyIFlyName(self, company):
         ifcp = IFlyPoster()
@@ -141,8 +151,9 @@ class SECMonitor:
         ifcp = IFlyPoster()
         print(company + ': ' + company_symbol)
 
-    def notifyIFlyMatches(self, company, company_symbol, dictmatches):
+    def notifyIFlyMatches(self, company, company_symbol, dictmatches, contentUrl, sentiment):
         ifcp = IFlyPoster()
-        ifcp.postMessage(company + ': ' + company_symbol + ': ' + dictmatches)
+        ifcp.postMessage('[{}] {} :: {} :: {} :: https://www.sec.gov{}'.format(company_symbol, company, dictmatches, sentiment,
+        contentUrl))
 #        print(company + ': ' + company_symbol + ': ' + dictmatches)
 
