@@ -11,7 +11,7 @@ class IFlyPoster:
                     'api_key': self.ifc_key,
                     'uid': 42, 
                     'name': 'secai',
-                    'picture_url': '',
+                    'picture_url': 'http://www.vnrllc.com/wp-content/uploads/2015/04/sec-filings.jpg',
                     'profile_url': 'javascript:void(0)',
                     'message': ifc_message,
                     'color': '#222222',

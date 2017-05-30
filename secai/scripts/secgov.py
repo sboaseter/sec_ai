@@ -8,7 +8,7 @@ from secai.models.dbmodels import Company, Submission, Phrase
 from secai.scripts.utils import replace_trash
 from secai.scripts.iflychat import IFlyPoster 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import codecs
 from colorama import init, Fore, Style
 init()
@@ -26,7 +26,7 @@ class SECMonitor:
         try:
             soup = bs(str(res.content).encode('utf-8'), 'html.parser')
             all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[html]')
-            print('Found {} Filings'.format(len(all_links)))
+#            print('Found {} Filings'.format(len(all_links)))
             for f in all_links: # Link | Processed
                 linkref = f['href']
                 accessno = re.search(r'^.*\/([^.]*)-.*$', linkref).group(1).strip()
@@ -60,7 +60,12 @@ class SECMonitor:
                 subm = self.addSubmission((accessno, company_symbol, company, filing8k_txt_url))
                 print(subm.content)
 
-                self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment)
+
+                if subm.content == '[]':
+                    continue
+
+                self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment,
+                subm.acceptedOn)
 #            return [x['href'] for x in all_links] # List of hrefs to the Filing detail page
 
         except Exception as e:
@@ -121,7 +126,7 @@ class SECMonitor:
         ns.companyId = c_id
         ns.accessionNo = new_subm[0]
         ns.rtype = '8-K'
-        ns.acceptedOn = datetime.now()
+        ns.acceptedOn = datetime.now() + timedelta(hours=3)
 
         procRes = self.processContent(new_subm[3])
         ns.content = str(procRes[0])
@@ -151,9 +156,11 @@ class SECMonitor:
         ifcp = IFlyPoster()
         print(company + ': ' + company_symbol)
 
-    def notifyIFlyMatches(self, company, company_symbol, dictmatches, contentUrl, sentiment):
+    def notifyIFlyMatches(self, company, company_symbol, dictmatches, contentUrl, sentiment, acceptedOn):
         ifcp = IFlyPoster()
-        ifcp.postMessage('[{}] {} :: {} :: {} :: https://www.sec.gov{}'.format(company_symbol, company, dictmatches, sentiment,
-        contentUrl))
+        ifc_msg = 'Symbol: {} Keywords Triggered: {} Time Stamp: {}. 8k Link: https://www.sec.gov{}'.format(company_symbol, dictmatches, acceptedOn.time().strftime("%H:%M %p"), contentUrl)
+        ifcp.postMessage(ifc_msg)
+#        ifcp.postMessage('({})[{}] {} :: {} :: {} :: https://www.sec.gov{}'.format(acceptedOn, company_symbol, company, dictmatches, sentiment,
+#        contentUrl))
 #        print(company + ': ' + company_symbol + ': ' + dictmatches)
 
