@@ -22,7 +22,13 @@ class SECMonitor:
 
     # Main listing refresh
     def getNewListings(self):
-        res = requests.get(self.sec_url)
+        try:        
+            res = requests.get(self.sec_url)
+        except Exception as ssl_error:
+            print('SSLError!')
+            print(str(ssl_error))
+            getNewListings()
+
         try:
             soup = bs(str(res.content).encode('utf-8'), 'html.parser')
             all_links = soup.findAll(lambda tag: tag.name == 'a' and tag.text == '[html]')
@@ -58,12 +64,12 @@ class SECMonitor:
                 if filing8k_txt_url == None:
                     continue
                 subm = self.addSubmission((accessno, company_symbol, company, filing8k_txt_url))
-                print(subm.content)
 
 
                 if subm.content == '[]':
                     continue
 
+                print(subm.content)
                 self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment,
                 subm.acceptedOn)
 #            return [x['href'] for x in all_links] # List of hrefs to the Filing detail page
