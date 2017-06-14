@@ -15,9 +15,10 @@ init()
 from textblob import TextBlob
 
 class SECMonitor:
-    def __init__(self, sec_url):
+    def __init__(self, sec_url, notify):
         self.sec_url = sec_url
         self.debug_on = False
+        self.notify = notify
         self.acno_proc = []
 
     # Main listing refresh
@@ -27,7 +28,7 @@ class SECMonitor:
         except Exception as ssl_error:
             print('SSLError!')
             print(str(ssl_error))
-            getNewListings()
+            self.getNewListings()
 
         try:
             soup = bs(str(res.content).encode('utf-8'), 'html.parser')
@@ -60,8 +61,8 @@ class SECMonitor:
                 if company_symbol == 'Not found':
                     continue
                 filing8k_txt_url = self.locate8kReport(f['href'])
-                print('[{}]: {}{}{}\t\t{}'.format(accessno, Fore.GREEN,company_symbol, Fore.RESET,company))
-                if filing8k_txt_url == None:
+                print('[{}]: {}{}{}\t\t{}'.format(accessno, Fore.GREEN, company_symbol, Fore.RESET, company))
+                if filing8k_txt_url is None:
                     continue
                 subm = self.addSubmission((accessno, company_symbol, company, filing8k_txt_url))
 
@@ -70,12 +71,11 @@ class SECMonitor:
                     continue
 
                 print(subm.content)
-                self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment,
-                subm.acceptedOn)
+                if self.notify:
+                    self.notifyIFlyMatches(company, company_symbol, subm.content, subm.contentUrl, subm.sentiment, subm.acceptedOn)
 #            return [x['href'] for x in all_links] # List of hrefs to the Filing detail page
 
         except Exception as e:
-            
             print('getNewListings: ' + str(e))
 
     # Locate the 8-k text document on the filing detail page
@@ -89,8 +89,7 @@ class SECMonitor:
                 pvtd = l.previous_sibling.previous_sibling.findAll(lambda tag: tag.name == 'a')
                 return pvtd[0]['href']
         except Exception as e:
-            pass
-            if self.debug_on: 
+            if self.debug_on:
                 print('locate8kReport: ' + str(e))
 
     #Process 8-K report text

@@ -11,8 +11,9 @@ print('{}{}{}{}{}'.format(Style.BRIGHT,Fore.GREEN, 'SEC A.I', Fore.RESET,Style.R
 
 filing_type = '8-k'
 filing_num = 10
+filing_base = 'https://www.sec.gov'
 
-xt = SECMonitor('https://www.sec.gov/cgi-bin/browse-edgar?company=&CIK=&type='+filing_type+'&owner=include&count='+str(filing_num)+'&action=getcurrent')
+xt = SECMonitor(filing_base+'/cgi-bin/browse-edgar?company=&CIK=&type='+filing_type+'&owner=include&count='+str(filing_num)+'&action=getcurrent', False)
 while True:
     #add threads after the scrape, inside SECMonitor
     xres = xt.getNewListings()

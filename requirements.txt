@@ -1,0 +1,7 @@
+beautifulsoup4
+colorama
+nltk
+PyMySQL
+requests
+SQLAlchemy
+textblob
