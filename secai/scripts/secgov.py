@@ -27,7 +27,7 @@ class SECMonitor:
         except Exception as ssl_error:
             print('SSLError!')
             print(str(ssl_error))
-            getNewListings()
+            self.getNewListings()
 
         try:
             soup = bs(str(res.content).encode('utf-8'), 'html.parser')

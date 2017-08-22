@@ -38,3 +38,10 @@ class Phrase(Base):
 
     def __repr__(self):
         return '{}: {}'.format(str(self.weight), self.text)
+
+class SECUIStatus(Base):
+    __tablename__ = 'SECUIStatus'
+    id = Column('id', Integer, primary_key=True)
+    text = Column('text', String(512))
+    entered_on = Column('entered_on', DateTime)
+
